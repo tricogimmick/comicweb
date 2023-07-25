@@ -1,37 +1,82 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Card from '../components/Card.astro';
+import pkg from 'sqlite3';
+  const { Database } = pkg;
+
+type MagazineType = {
+	id: string,
+	title: string,
+	publisher: string|null,
+	description: string|null
+}
+
+type IssueType = {
+	id: string,
+	magazine_id: string,
+	title: string,
+	cover_url: string | null,
+	toc_url: string | null,
+	description: string | null
+}
+
+function GetMagazines(db: Database) {
+	return new Promise<MagazineType[]>((ok, ng) => {
+		db.all<MagazineType>("SELECT * FROM magazines ORDER BY id", [], (err, rows) => {
+			if (err || rows == null) {
+				ng(err || "Data nor found");
+			} else {
+				ok(rows);
+			}
+		});
+	})
+}
+
+function GetIssues(db: Database) {
+	return new Promise<IssueType[]>((ok, ng) => {
+		db.all<IssueType>("SELECT * FROM issues ORDER BY id", [] , (err, rows) => {
+			if (err || rows == null) {
+				ng(err || "Data nor found");
+			} else {
+				ok(rows);
+			}
+		});
+	})
+}
+
+const dbPath = import.meta.env.COMICDB_PATH;
+const db = new Database(dbPath);
+
+const magazines = await GetMagazines(db);
+const issues = await GetIssues(db);
+const years = [2022, 2023];
+
+
+db.close();
+
 ---
 
 <Layout title="Welcome to Astro.">
 	<main>
-		<h1>Welcome to <span class="text-gradient">Astro</span></h1>
-		<p class="instructions">
-			To get started, open the directory <code>src/pages</code> in your project.<br />
-			<strong>Code Challenge:</strong> Tweak the "Welcome to Astro" message above.
-		</p>
-		<ul role="list" class="link-card-grid">
-			<Card
-				href="https://docs.astro.build/"
-				title="Documentation"
-				body="Learn how Astro works and explore the official API docs."
-			/>
-			<Card
-				href="https://astro.build/integrations/"
-				title="Integrations"
-				body="Supercharge your project with new frameworks and libraries."
-			/>
-			<Card
-				href="https://astro.build/themes/"
-				title="Themes"
-				body="Explore a galaxy of community-built starter themes."
-			/>
-			<Card
-				href="https://astro.build/chat/"
-				title="Community"
-				body="Come say hi to our amazing Discord community. ❤️"
-			/>
-		</ul>
+		<h1>Comic Magazine Data</h1>
+		<div>
+			{magazines.filter(m => m.id != 'BSMG').map(magazine => (
+				<div>
+					<h2>{magazine.title}</h2>
+					{years.map(y => (
+						<div>
+							<h3>{y}</h3>
+							<div>
+							{issues
+								.filter(x => x.magazine_id == magazine.id && x.id.substring(4,8) == String(y))
+								.map(x => (<a href={`/issue/${x.id}`}>{x.id.substring(8)}</a>))}
+							</div>
+						</div>
+					))}
+					<ul>
+					</ul>
+				</div>
+			))}
+		</div>
 	</main>
 </Layout>
 
@@ -46,36 +91,7 @@ import Card from '../components/Card.astro';
 		font-weight: 800;
 		margin: 0;
 	}
-	.text-gradient {
-		background-image: var(--accent-gradient);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-size: 400%;
-		background-position: 0%;
-	}
-	.instructions {
-		line-height: 1.6;
-		margin: 1rem 0;
-		border: 1px solid rgba(var(--accent), 25%);
-		background-color: white;
-		padding: 1rem;
-		border-radius: 0.4rem;
-	}
-	.instructions code {
-		font-size: 0.875em;
-		font-weight: bold;
-		background: rgba(var(--accent), 12%);
-		color: rgb(var(--accent));
-		border-radius: 4px;
-		padding: 0.3em 0.45em;
-	}
-	.instructions strong {
-		color: rgb(var(--accent));
-	}
-	.link-card-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr));
-		gap: 1rem;
-		padding: 0;
+	a {
+		margin-left: 0.5rem;
 	}
 </style>

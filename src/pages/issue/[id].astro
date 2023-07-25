@@ -1,0 +1,183 @@
+---
+import { parseQuality } from 'astro/dist/assets/services/service';
+import Layout from '../../layouts/Layout.astro';
+import pkg from 'sqlite3';
+const { Database } = pkg;
+
+type MagazineType = {
+	id: string,
+	title: string,
+	publisher: string|null,
+	description: string|null
+}
+
+type IssueType = {
+	id: string,
+	magazine_id: string,
+	title: string,
+	cover_url: string | null,
+	toc_url: string | null,
+	description: string | null
+}
+
+type ContentType = {
+    issue_id: string,
+    order_no: number,
+    title_id: number,
+    title: string,
+    page_no: number,
+    content_type: number,
+    color: number | null,
+    serialization_status: number | null,
+    description: string | null,
+    aurthors: string | null,
+    scripters: string | null
+}
+
+type AuthorType = {
+    id: number,
+    name: string,
+    kana: string,
+    author_type: string,
+    description: string
+}
+
+type ParamType = {
+    params: {
+        id: string
+    },
+    props: {
+        issue: IssueType
+    }
+};
+
+export function getStaticPaths() {
+    const { Database } = pkg;
+    const dbPath = import.meta.env.COMICDB_PATH;
+    const db = new Database(dbPath);
+	return new Promise<ParamType[]>((ok, ng) => {
+		db.all<IssueType>("SELECT * FROM issues ORDER BY id", [] , (err, rows) => {
+			if (err || rows == null) {
+				ng(err || "Data not found");
+			} else {
+				ok(rows.map(x => ({ params: { id: x.id }, props: { issue: x }})));
+			}
+		});
+	})
+    db.close();
+}
+
+function getMagazine(db: Database, id: string) {
+	return new Promise<MagazineType>((ok, ng) => {
+		db.get<MagazineType>("SELECT * FROM magazines WHERE id = ?", [id], (err, row) => {
+			if (err || row == null) {
+				ng(err || "Data not found");
+			} else {
+				ok(row);
+			}
+		});
+	})
+}
+
+function getContents(db: Database, id: string) {
+    return new Promise<ContentType[]>((ok, ng) => {
+        db.all<ContentType>(
+            "SELECT c.*, t.title FROM contents as C JOIN titles as t ON t.id = c.title_id WHERE c.issue_id = ? ORDER BY order_no",
+            [id], 
+            (err, rows) => {
+                if (err || rows == null) {
+                    ng(err || "Data not found");
+                } else {
+                    ok(rows);
+                }
+            });
+    });
+}
+
+function getAuthors(db: Database, titleId: number, authorType: "AUTHOR"|"SCRIPT") {
+    return new Promise<AuthorType[]>((ok, ng) => {
+        db.all<AuthorType>(
+            "SELECT a.* FROM title_authors as r JOIN authors as a ON a.id = r.author_id WHERE r.title_id = ? AND author_type = ?",
+            [titleId, authorType],
+            (err, rows) => {
+                if (err) {
+                    ng(err);
+                } else {
+                    ok(rows || []);
+                }
+            }
+        )
+    });
+}
+
+function getContentType(contentType: number|null) {
+    if (contentType == null) {
+        return "";
+    }
+    switch (contentType) {
+        case 0: return "読み切り";
+        case 1: return "連載";
+        case 2: return "出張掲載";
+        default: return "";
+    }
+}
+
+const { issue } = Astro.props;
+
+const dbPath = import.meta.env.COMICDB_PATH;
+const db = new Database(dbPath);
+
+const magazine = await getMagazine(db, issue.magazine_id);
+const contents = await getContents(db, issue.id);
+
+for (let content of contents) {
+    const authors = await getAuthors(db, content.title_id, "AUTHOR");
+    const scripters = await getAuthors(db, content.title_id, "SCRIPT");
+    content.aurthors = authors.map(a => a.name).join(" & ");
+    content.scripters = scripters.map(a => a.name).join(" & ");
+}
+
+db.close();
+
+
+---
+
+<Layout title="Welcome to Astro.">
+	<main>
+        <h1>{magazine?.title} {issue.title}</h1>
+        <p>{issue.description}</p>
+        <div>
+            <table>
+                <thead>
+                    <tr>
+                        <td>No</td>
+                        <td>作品名</td>
+                        <td>漫画</td>
+                        <td>原作</td>
+                        <td>頁</td>
+                        <td>種別</td>
+                        <td>カラー有無</td>
+                        <td>備考</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {contents.map(c => (
+                        <tr>
+                            <td>{c.order_no}</td>
+                            <td>{c.title}</td>
+                            <td>{c.aurthors}</td>
+                            <td>{c.scripters}</td>
+                            <td>{c.page_no}</td>
+                            <td>{getContentType(c.content_type)}</td>
+                            <td>{c.color == 1 ? "有" : ""}</td>
+                            <td>{c.description}</td>
+                        </tr>
+                    ))}        
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <a href="/">戻る</a>
+        </div>
+    </main>
+</Layout>
