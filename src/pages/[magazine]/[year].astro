@@ -1,0 +1,88 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import sqlite3 from 'sqlite3';
+import type { MagazineType, TitleType, IssueType } from '../../types/model';
+
+type ParamType = {
+    params: {
+        magazine: string,
+        year: number
+    },
+    props: {
+        magazine: MagazineType
+    }
+};
+
+export function getStaticPaths() {
+    const dbPath = import.meta.env.COMICDB_PATH;
+	return new Promise<ParamType[]>((ok, ng) => {
+        const db = new sqlite3.Database(dbPath);
+		db.all<MagazineType>("SELECT * FROM magazines ORDER BY id", [] , (err, rows) => {
+			if (err || rows == null) {
+				ng(err || "Data not found");
+			} else {
+                const result: ParamType[] = [];
+                for (const m of rows) {
+                    result.push({ params: { magazine: m.id, year: 2022 }, props: { magazine: m} });
+                    result.push({ params: { magazine: m.id, year: 2023 }, props: { magazine: m} });
+                }
+                ok(result);
+			}
+		});
+        db.close();
+	})
+}
+
+function getTitles(db: sqlite3.Database, magazineId: string, year: string | undefined) {
+    return new Promise<TitleType[]>((ok, ng) => {
+        const key = `${magazineId}${year}%`;
+        db.all<TitleType>(
+            "SELECT DISTINCT t.* FROM contents as c JOIN titles as t ON t.id = c.title_id WHERE c.issue_id like ? ORDER BY t.id", 
+            [key], 
+            (err, rows) => {
+                if (err) {
+                    ng(err);
+                } else {
+                    ok(rows || []);
+                }
+            });
+    });
+}
+
+const { year } = Astro.params;
+const { magazine } = Astro.props;
+
+const dbPath = import.meta.env.COMICDB_PATH;
+const db = new sqlite3.Database(dbPath);
+
+const titles = await getTitles(db, magazine.id, year);
+
+
+db.close();
+
+---
+
+<Layout title="Welcome to Astro.">
+	<main>
+        <h1>{magazine.title} {year}年度</h1>
+        <div>
+            {titles.map(t => (<div>{t.title}</div>))}
+        </div>
+        <div>
+            <a href="/">戻る</a>
+        </div>
+    </main>
+</Layout>
+
+<style>
+	main {
+		margin: auto;
+		padding: 1.5rem;
+		max-width: 1000px;
+	}
+	h1 {
+		font-size: 3rem;
+		font-weight: 800;
+		margin: 0;
+	}
+</style>

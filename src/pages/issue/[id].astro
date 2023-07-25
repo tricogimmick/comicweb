@@ -1,46 +1,7 @@
 ---
-import { parseQuality } from 'astro/dist/assets/services/service';
 import Layout from '../../layouts/Layout.astro';
-import pkg from 'sqlite3';
-const { Database } = pkg;
-
-type MagazineType = {
-	id: string,
-	title: string,
-	publisher: string|null,
-	description: string|null
-}
-
-type IssueType = {
-	id: string,
-	magazine_id: string,
-	title: string,
-	cover_url: string | null,
-	toc_url: string | null,
-	description: string | null
-}
-
-type ContentType = {
-    issue_id: string,
-    order_no: number,
-    title_id: number,
-    title: string,
-    page_no: number,
-    content_type: number,
-    color: number | null,
-    serialization_status: number | null,
-    description: string | null,
-    aurthors: string | null,
-    scripters: string | null
-}
-
-type AuthorType = {
-    id: number,
-    name: string,
-    kana: string,
-    author_type: string,
-    description: string
-}
+import sqlite3 from 'sqlite3';
+import type { MagazineType, IssueType, ContentType, AuthorType } from '../../types/model';
 
 type ParamType = {
     params: {
@@ -52,10 +13,9 @@ type ParamType = {
 };
 
 export function getStaticPaths() {
-    const { Database } = pkg;
     const dbPath = import.meta.env.COMICDB_PATH;
-    const db = new Database(dbPath);
 	return new Promise<ParamType[]>((ok, ng) => {
+        const db = new sqlite3.Database(dbPath);
 		db.all<IssueType>("SELECT * FROM issues ORDER BY id", [] , (err, rows) => {
 			if (err || rows == null) {
 				ng(err || "Data not found");
@@ -63,11 +23,11 @@ export function getStaticPaths() {
 				ok(rows.map(x => ({ params: { id: x.id }, props: { issue: x }})));
 			}
 		});
+        db.close();
 	})
-    db.close();
 }
 
-function getMagazine(db: Database, id: string) {
+function getMagazine(db: sqlite3.Database, id: string) {
 	return new Promise<MagazineType>((ok, ng) => {
 		db.get<MagazineType>("SELECT * FROM magazines WHERE id = ?", [id], (err, row) => {
 			if (err || row == null) {
@@ -79,7 +39,7 @@ function getMagazine(db: Database, id: string) {
 	})
 }
 
-function getContents(db: Database, id: string) {
+function getContents(db: sqlite3.Database, id: string) {
     return new Promise<ContentType[]>((ok, ng) => {
         db.all<ContentType>(
             "SELECT c.*, t.title FROM contents as C JOIN titles as t ON t.id = c.title_id WHERE c.issue_id = ? ORDER BY order_no",
@@ -94,7 +54,7 @@ function getContents(db: Database, id: string) {
     });
 }
 
-function getAuthors(db: Database, titleId: number, authorType: "AUTHOR"|"SCRIPT") {
+function getAuthors(db: sqlite3.Database, titleId: number, authorType: "AUTHOR"|"SCRIPT") {
     return new Promise<AuthorType[]>((ok, ng) => {
         db.all<AuthorType>(
             "SELECT a.* FROM title_authors as r JOIN authors as a ON a.id = r.author_id WHERE r.title_id = ? AND author_type = ?",
@@ -125,7 +85,7 @@ function getContentType(contentType: number|null) {
 const { issue } = Astro.props;
 
 const dbPath = import.meta.env.COMICDB_PATH;
-const db = new Database(dbPath);
+const db = new sqlite3.Database(dbPath);
 
 const magazine = await getMagazine(db, issue.magazine_id);
 const contents = await getContents(db, issue.id);
@@ -181,3 +141,16 @@ db.close();
         </div>
     </main>
 </Layout>
+
+<style>
+	main {
+		margin: auto;
+		padding: 1.5rem;
+		max-width: 1000px;
+	}
+	h1 {
+		font-size: 3rem;
+		font-weight: 800;
+		margin: 0;
+	}
+</style>
