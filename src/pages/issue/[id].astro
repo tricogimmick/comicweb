@@ -1,7 +1,8 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import sqlite3 from 'sqlite3';
-import type { MagazineType, IssueType, ContentType, AuthorType } from '../../types/model';
+import type { MagazineType, IssueType } from '../../types/model';
+import { getAuthors, getContentType } from '../../lib/functions'
 
 type ParamType = {
     params: {
@@ -11,6 +12,20 @@ type ParamType = {
         issue: IssueType
     }
 };
+
+export type QueryResultype = {
+    issue_id: string,
+    order_no: number,
+    title_id: number,
+    title: string,
+    page_no: number,
+    content_type: number,
+    color: number | null,
+    serialization_status: number | null,
+    description: string | null,
+    aurthors: string | null,
+    scripters: string | null
+}
 
 export function getStaticPaths() {
     const dbPath = import.meta.env.COMICDB_PATH;
@@ -40,8 +55,8 @@ function getMagazine(db: sqlite3.Database, id: string) {
 }
 
 function getContents(db: sqlite3.Database, id: string) {
-    return new Promise<ContentType[]>((ok, ng) => {
-        db.all<ContentType>(
+    return new Promise<QueryResultype[]>((ok, ng) => {
+        db.all<QueryResultype>(
             "SELECT c.*, t.title FROM contents as C JOIN titles as t ON t.id = c.title_id WHERE c.issue_id = ? ORDER BY order_no",
             [id], 
             (err, rows) => {
@@ -52,34 +67,6 @@ function getContents(db: sqlite3.Database, id: string) {
                 }
             });
     });
-}
-
-function getAuthors(db: sqlite3.Database, titleId: number, authorType: "AUTHOR"|"SCRIPT") {
-    return new Promise<AuthorType[]>((ok, ng) => {
-        db.all<AuthorType>(
-            "SELECT a.* FROM title_authors as r JOIN authors as a ON a.id = r.author_id WHERE r.title_id = ? AND author_type = ?",
-            [titleId, authorType],
-            (err, rows) => {
-                if (err) {
-                    ng(err);
-                } else {
-                    ok(rows || []);
-                }
-            }
-        )
-    });
-}
-
-function getContentType(contentType: number|null) {
-    if (contentType == null) {
-        return "";
-    }
-    switch (contentType) {
-        case 0: return "読み切り";
-        case 1: return "連載";
-        case 2: return "出張掲載";
-        default: return "";
-    }
 }
 
 const { issue } = Astro.props;
@@ -124,7 +111,7 @@ db.close();
                     {contents.map(c => (
                         <tr>
                             <td>{c.order_no}</td>
-                            <td>{c.title}</td>
+                            <td><a href={`/title/${c.title_id}`}>{c.title}</a></td>
                             <td>{c.aurthors}</td>
                             <td>{c.scripters}</td>
                             <td>{c.page_no}</td>

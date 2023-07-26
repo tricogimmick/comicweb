@@ -1,36 +1,12 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import sqlite3 from 'sqlite3';
-import type { MagazineType, IssueType } from '../types/model';
-
-function GetMagazines(db: sqlite3.Database) {
-	return new Promise<MagazineType[]>((ok, ng) => {
-		db.all<MagazineType>("SELECT * FROM magazines ORDER BY id", [], (err, rows) => {
-			if (err || rows == null) {
-				ng(err || "Data nor found");
-			} else {
-				ok(rows);
-			}
-		});
-	})
-}
-
-function GetIssues(db: sqlite3.Database) {
-	return new Promise<IssueType[]>((ok, ng) => {
-		db.all<IssueType>("SELECT * FROM issues ORDER BY id", [] , (err, rows) => {
-			if (err || rows == null) {
-				ng(err || "Data nor found");
-			} else {
-				ok(rows);
-			}
-		});
-	})
-}
+import { getAllMagazines, GetIssues } from '../lib/functions';
 
 const dbPath = import.meta.env.COMICDB_PATH;
 const db = new sqlite3.Database(dbPath);
 
-const magazines = await GetMagazines(db);
+const magazines = await getAllMagazines(db);
 const issues = await GetIssues(db);
 const years = [2022, 2023];
 

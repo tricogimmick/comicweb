@@ -1,7 +1,8 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import sqlite3 from 'sqlite3';
-import type { MagazineType, TitleType, IssueType } from '../../types/model';
+import type { MagazineType, TitleType, IssueType, ContentType } from '../../types/model';
+import { renderUniqueStylesheet } from 'astro/dist/runtime/server';
 
 type ParamType = {
     params: {
@@ -12,6 +13,13 @@ type ParamType = {
         magazine: MagazineType
     }
 };
+
+type SummaryType = {
+    id: number,
+    title: string,
+    contentType: number | null,
+    data: (number | null)[]
+}
 
 export function getStaticPaths() {
     const dbPath = import.meta.env.COMICDB_PATH;
@@ -49,6 +57,62 @@ function getTitles(db: sqlite3.Database, magazineId: string, year: string | unde
     });
 }
 
+function getIssues(db: sqlite3.Database, magazineId: string, year: string | undefined) {
+    return new Promise<IssueType[]>((ok, ng) => {
+        const key = `${magazineId}${year}%`;
+        db.all<IssueType>(
+            "SELECT * FROM issues WHERE id like ? ORDER BY id", 
+            [key], 
+            (err, rows) => {
+                if (err) {
+                    ng(err);
+                } else {
+                    ok(rows || []);
+                }
+            });
+    });
+}
+
+function getContents(db: sqlite3.Database, magazineId: string, year: string | undefined) {
+    return new Promise<ContentType[]>((ok, ng) => {
+        const key = `${magazineId}${year}%`;
+        db.all<ContentType>(
+            "SELECT * FROM contents WHERE issue_id like ? ORDER BY order_no", 
+            [key], 
+            (err, rows) => {
+                if (err) {
+                    ng(err);
+                } else {
+                    ok(rows || []);
+                }
+            });
+    });
+}
+
+function getContentTypeName(contentType: number | null) {
+    if (contentType == null) {
+        return "";
+    }
+    switch (contentType) {
+        case 0: return "読み切り";
+        case 1: return "連載";
+        case 2: return "出張掲載"
+        default: return "";
+    }
+}
+
+function contentTypeSortOrder(contentType: number | null) {
+    if (contentType == null) {
+        return 9;
+    }
+    switch (contentType) {
+        case 0: return 2;
+        case 1: return 1;
+        case 2: return 3;
+        default: return 9;
+    }
+}
+
 const { year } = Astro.params;
 const { magazine } = Astro.props;
 
@@ -56,7 +120,39 @@ const dbPath = import.meta.env.COMICDB_PATH;
 const db = new sqlite3.Database(dbPath);
 
 const titles = await getTitles(db, magazine.id, year);
+const issues = await getIssues(db, magazine.id, year);
+const contents = await getContents(db, magazine.id, year);
 
+const summary = titles.map<SummaryType>(t => ({ id: t.id, title: t.title, contentType: t.content_type, data: [...Array(issues.length)]}));
+for (const c of contents) {
+    const colIndex = issues.findIndex(x => x.id == c.issue_id);
+    const dataRow = summary.find(x => x.id == c.title_id);
+    if (colIndex >= 0 && dataRow) {
+        dataRow.contentType = c.content_type;
+        dataRow.data[colIndex] = c.order_no;
+    }
+ }
+ summary.sort((a,b) => {
+    if (contentTypeSortOrder(a.contentType) != contentTypeSortOrder(b.contentType)) {
+        return contentTypeSortOrder(a.contentType) - contentTypeSortOrder(b.contentType);
+    }
+    if (a.contentType != 1) {
+        return 0;
+    }
+    const n1 = (b.data.filter(x => x == 1).length || 0) - (a.data.filter(x => x == 1).length || 0);
+    if (n1 != 0) {
+        return n1;
+    }
+    const n2 = (b.data.filter(x => x == 2).length || 0) - (a.data.filter(x => x == 2).length || 0);
+    if (n2 != 0) {
+        return n2;
+    }
+    const n3 = (b.data.filter(x => x == 3).length || 0) - (a.data.filter(x => x == 3).length || 0);
+    if (n3 != 0) {
+        return n3;
+    }
+    return 0;
+});
 
 db.close();
 
@@ -66,7 +162,24 @@ db.close();
 	<main>
         <h1>{magazine.title} {year}年度</h1>
         <div>
-            {titles.map(t => (<div>{t.title}</div>))}
+            <table>
+                <thead>
+                    <tr>
+                        <td class="title">作品名</td>
+                        <td class="content-type">種別</td>
+                        {issues.map(i => (<td>{i.id.substring(8).replace("-"," ")}</td>))}    
+                    </tr>
+                </thead>
+                <tbody>
+                    {summary.map(x => (
+                        <tr>
+                            <td class="title">{x.title}</td>
+                            <td class="content-type">{getContentTypeName(x.contentType)}</td>
+                            {x.data.map(d => (<td class={d == null ? "empty" : ""}>{d}</td>))}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
         <div>
             <a href="/">戻る</a>
@@ -78,11 +191,36 @@ db.close();
 	main {
 		margin: auto;
 		padding: 1.5rem;
-		max-width: 1000px;
 	}
 	h1 {
 		font-size: 3rem;
 		font-weight: 800;
 		margin: 0;
 	}
+    table {
+        border-collapse:  collapse;
+        table-layout: fixed;
+        width: 200rem;
+        font-size: 80%;
+    }
+    thead {
+        background-color: silver;
+    }
+    th, td {
+        border: 1px solid gray;
+        text-align: center;
+        padding: 0.1rem 0.2rem;
+    }
+    td.title, th.title {
+        width: 25rem;
+        text-align: left;
+        white-space: nowrap;
+    }
+    td.content-type, th.content-type {
+        width: 5rem;
+        white-space: nowrap;
+    }
+    td.empty {
+        background-color: lightgray;
+    }
 </style>

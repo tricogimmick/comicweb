@@ -1,0 +1,56 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import sqlite3 from 'sqlite3';
+import type { TitleType } from '../../types/model';
+import { getAllTitles } from '../../lib/functions';
+
+
+const dbPath = import.meta.env.COMICDB_PATH;
+const db = new sqlite3.Database(dbPath);
+
+const titles = await getAllTitles(db);
+
+db.close();
+
+---
+
+<Layout title="Welcome to Astro.">
+	<main>
+		<h1>Comic Titles</h1>
+		<div>
+            {titles.map(t => (
+                <div><a href={`/title/${t.id}`}>{t.title}</a></div>
+            ))}
+		</div>
+	</main>
+</Layout>
+
+<style>
+	main {
+		margin: auto;
+		padding: 1.5rem;
+		max-width: 60ch;
+	}
+	h1 {
+		font-size: 3rem;
+		font-weight: 800;
+		margin: 0;
+	}
+    main > div {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 800px;
+        margin: auto;
+        padding: 0;
+        font-size: 80%;
+    }
+    main > div > div {
+        margin: 0;
+        width: 400px;
+    }
+
+	a {
+		margin-left: 0.5rem;
+	}
+</style>

@@ -18,14 +18,11 @@ export type ContentType = {
     issue_id: string,
     order_no: number,
     title_id: number,
-    title: string,
     page_no: number,
     content_type: number,
     color: number | null,
     serialization_status: number | null,
     description: string | null,
-    aurthors: string | null,
-    scripters: string | null
 }
 
 export type TitleType = {
