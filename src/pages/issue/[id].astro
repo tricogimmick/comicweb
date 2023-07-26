@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import sqlite3 from 'sqlite3';
-import type { MagazineType, IssueType } from '../../types/model';
+import type { MagazineType, IssueType, AuthorType } from '../../types/model';
 import { getAuthors, getContentType } from '../../lib/functions'
 
 type ParamType = {
@@ -23,8 +23,8 @@ export type QueryResultype = {
     color: number | null,
     serialization_status: number | null,
     description: string | null,
-    aurthors: string | null,
-    scripters: string | null
+    authors: AuthorType[] | null,
+    scripters: AuthorType[] | null
 }
 
 export function getStaticPaths() {
@@ -78,10 +78,8 @@ const magazine = await getMagazine(db, issue.magazine_id);
 const contents = await getContents(db, issue.id);
 
 for (let content of contents) {
-    const authors = await getAuthors(db, content.title_id, "AUTHOR");
-    const scripters = await getAuthors(db, content.title_id, "SCRIPT");
-    content.aurthors = authors.map(a => a.name).join(" & ");
-    content.scripters = scripters.map(a => a.name).join(" & ");
+    content.authors = await getAuthors(db, content.title_id, "AUTHOR");
+    content.scripters = await getAuthors(db, content.title_id, "SCRIPT");
 }
 
 db.close();
@@ -112,8 +110,12 @@ db.close();
                         <tr>
                             <td>{c.order_no}</td>
                             <td><a href={`/title/${c.title_id}`}>{c.title}</a></td>
-                            <td>{c.aurthors}</td>
-                            <td>{c.scripters}</td>
+                            <td>{c.authors?.map((a,i) => i < (c.authors?.length ?? 0) - 1 ? 
+                                    (<a href={`/author/${a.id}`}>{a.name}</a><span>&</span>) :
+                                    (<a href={`/author/${a.id}`}>{a.name}</a>))}</td>
+                            <td>{c.scripters?.map((a,i) => i < (c.scripters?.length ?? 0) - 1 ? 
+                                    (<a href={`/author/${a.id}`}>{a.name}</a><span>&</span>) :
+                                    (<a href={`/author/${a.id}`}>{a.name}</a>))}</td>
                             <td>{c.page_no}</td>
                             <td>{getContentType(c.content_type)}</td>
                             <td>{c.color == 1 ? "有" : ""}</td>
@@ -136,8 +138,8 @@ db.close();
 		max-width: 1000px;
 	}
 	h1 {
-		font-size: 3rem;
-		font-weight: 800;
+		font-size: 2rem;
+		font-weight: 400;
 		margin: 0;
 	}
 </style>

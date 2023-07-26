@@ -84,9 +84,15 @@ db.close();
             <dl>
                 <dt>作者</dt>
                 <dd>
-                    {authors.map(a => a.name).join(" & ")}
+                    {authors.map((a,i) => i < authors.length - 1 ? 
+                        (<a href={`/author/${a.id}`}>{a.name}</a><span>&</span>) :
+                        (<a href={`/author/${a.id}`}>{a.name}</a>))}
                 </dd>
-                {scripters.length > 0 ? <><dt>原作</dt><dd>{scripters.map(a => a.name).join(" & ")}</dd></> : <></>}
+                {scripters.length > 0 ? 
+                    <><dt>原作</dt><dd>{scripters.map((a,i) => i < scripters.length - 1 ? 
+                        (<a href={`/author/${a.id}`}>{a.name}</a><span>&</span>) :
+                        (<a href={`/author/${a.id}`}>{a.name}</a>))}</dd></> : 
+                    <></>}
                 <dt>掲載誌</dt>
                 <dd>{magazineName}</dd>
                 <dt>備考</dt>
@@ -132,8 +138,11 @@ db.close();
 		max-width: 60ch;
 	}
 	h1 {
-		font-size: 3rem;
-		font-weight: 800;
-		margin: 0;
+		font-size: 2rem;
+		font-weight: 400;
 	}
+    span {
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
 </style>

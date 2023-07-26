@@ -1,0 +1,114 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import sqlite3 from 'sqlite3';
+import type { AuthorType, TitleType } from '../../types/model';
+import { getContentType } from '../../lib/functions'
+
+type ParamType = {
+    params: {
+        id: number
+    },
+    props: {
+        author: AuthorType
+    }
+};
+
+type QueryResultType = {
+    id: number,
+    title: string,
+    content_type: number,
+    magazine_name: string,
+    description: string,
+}
+
+export function getStaticPaths() {
+    const dbPath = import.meta.env.COMICDB_PATH;
+	return new Promise<ParamType[]>((ok, ng) => {
+        const db = new sqlite3.Database(dbPath);
+		db.all<AuthorType>("SELECT * FROM authors ORDER BY id", [] , (err, rows) => {
+			if (err || rows == null) {
+				ng(err || "Data not found");
+			} else {
+				ok(rows.map(x => ({ params: { id: x.id }, props: { author: x }})));
+			}
+		});
+        db.close();
+	})
+}
+
+function getTitles(db: sqlite3.Database, id: string) {
+    return new Promise<QueryResultType[]>((ok, ng) => {
+        db.all<QueryResultType>(
+            "SELECT t.id, t.title, t.content_type, m.title as magazine_name, t.description FROM titles as t " +
+            "JOIN magazines as m ON m.id = t.publication " +
+            "JOIN title_authors as r ON r.title_id = t.id WHERE r.author_id = ? ORDER BY t.id",
+            [id], 
+            (err, rows) => {
+                if (err || rows == null) {
+                    ng(err || "Data not found");
+                } else {
+                    ok(rows);
+                }
+            });
+    });
+}
+
+const { author } = Astro.props;
+
+const dbPath = import.meta.env.COMICDB_PATH;
+const db = new sqlite3.Database(dbPath);
+
+const titles = await getTitles(db, author.id);
+
+db.close();
+
+---
+
+<Layout title="Comic Data - Author Info">
+	<main>
+		<h1>{author.name}</h1>
+		<div>
+            <h2>作品一覧</h2>
+            <div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>作品名</th>
+                            <th>種別</th>
+                            <th>掲載誌</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {titles.map(t => (
+                            <tr>
+                                <td><a href={`/title/${t.id}`}>{t.title}</a></td>
+                                <td>{getContentType(t.content_type)}</td>
+                                <td>{t.magazine_name}</td>
+                                <td>{t.description}</td>
+                            </tr>
+                        ))}            
+                    </tbody>
+                </table>                
+            </div>
+        </div>
+        <div>
+            <a href="/title">作者一覧へ戻る</a>
+        </div>
+	</main>
+</Layout>
+
+<style>
+	main {
+		margin: auto;
+		padding: 1.5rem;
+		max-width: 60ch;
+	}
+	h1 {
+		font-size: 2rem;
+		font-weight: 400;
+	}
+    h2 {
+		font-size: 1.2rem;
+		font-weight: 400;
+    }
+</style>

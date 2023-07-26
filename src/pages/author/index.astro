@@ -2,13 +2,13 @@
 import Layout from '../../layouts/Layout.astro';
 import sqlite3 from 'sqlite3';
 import type { TitleType } from '../../types/model';
-import { getAllTitles } from '../../lib/functions';
+import { getAllAuthors } from '../../lib/functions';
 
 
 const dbPath = import.meta.env.COMICDB_PATH;
 const db = new sqlite3.Database(dbPath);
 
-const titles = await getAllTitles(db);
+const authors = await getAllAuthors(db);
 
 db.close();
 
@@ -16,10 +16,10 @@ db.close();
 
 <Layout title="Welcome to Astro.">
 	<main>
-		<h1>Comic Titles</h1>
+		<h1>作者一覧</h1>
 		<div>
-            {titles.map(t => (
-                <div><a href={`/title/${t.id}`}>{t.title}</a></div>
+            {authors.map(t => (
+                <div><a href={`/author/${t.id}`}>{t.name}</a></div>
             ))}
 		</div>
 		<div>
@@ -51,6 +51,7 @@ db.close();
         margin: 0;
         width: 400px;
     }
+
 	a {
 		margin-left: 0.5rem;
 	}
