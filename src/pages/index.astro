@@ -23,7 +23,7 @@ db.close();
 					<h2>{magazine.title}</h2>
 					{years.map(y => (
 						<div>
-							<h3><a href={`/${magazine.id}/${y}`}>{y}年度</a></h3>
+							<h3><a href={`./${magazine.id}/${y}`}>{y}年度</a></h3>
 							<div>
 							{issues
 								.filter(x => x.magazine_id == magazine.id && x.id.substring(4,8) == String(y))
