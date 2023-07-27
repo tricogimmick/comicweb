@@ -8,7 +8,7 @@ const db = new sqlite3.Database(dbPath);
 
 const magazines = await getAllMagazines(db);
 const issues = await getAllIssues(db);
-const years = [2022, 2023];
+const years = ["2022", "2023"];
 
 db.close();
 
