@@ -1,7 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import sqlite3 from 'sqlite3';
-import type { TitleType } from '../../types/model';
 import { getAllTitles } from '../../lib/functions';
 
 
@@ -14,35 +13,25 @@ db.close();
 
 ---
 
-<Layout title="Welcome to Astro.">
+<Layout title="Comic Magazine Data - Comic Titles">
 	<main>
 		<h1>Comic Titles</h1>
 		<div>
             {titles.map(t => (
-                <div><a href={`/title/${t.id}`}>{t.title}</a></div>
+                <div><a href={`./${t.id}`}>{t.title}</a></div>
             ))}
 		</div>
 		<div>
-			<a href="/">TOPへ</a>
+			<a href="..">TOPへ</a>
 		</div>
 	</main>
 </Layout>
 
 <style>
-	main {
-		margin: auto;
-		padding: 1.5rem;
-		max-width: 60ch;
-	}
-	h1 {
-		font-size: 2rem;
-		font-weight: 400;
-	}
     main > div {
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
-        width: 800px;
         margin: auto;
         padding: 0;
         font-size: 80%;
@@ -51,7 +40,4 @@ db.close();
         margin: 0;
         width: 400px;
     }
-	a {
-		margin-left: 0.5rem;
-	}
 </style>

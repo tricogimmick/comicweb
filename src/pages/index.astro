@@ -14,7 +14,7 @@ db.close();
 
 ---
 
-<Layout title="Welcome to Astro.">
+<Layout title="Comic Magazine Data">
 	<main>
 		<h1>Comic Magazine Data</h1>
 		<div>
@@ -27,7 +27,7 @@ db.close();
 							<div>
 							{issues
 								.filter(x => x.magazine_id == magazine.id && x.id.substring(4,8) == String(y))
-								.map(x => (<a href={`/issue/${x.id}`}>{x.id.substring(8)}</a>))}
+								.map(x => (<a href={`./issue/${x.id}`}>{x.id.substring(8)}</a>))}
 							</div>
 						</div>
 					))}
@@ -37,23 +37,11 @@ db.close();
 			))}
 		</div>
 		<div>
-			<a href="/title/">作品一覧</a> / <a href="/author/">作者一覧</a>
+			<a href="./title/">作品一覧</a> / <a href="./author/">作者一覧</a>
 		</div>
 	</main>
 </Layout>
 
 <style>
-	main {
-		margin: auto;
-		padding: 1.5rem;
-		max-width: 60ch;
-	}
-	h1 {
-		font-size: 3rem;
-		font-weight: 800;
-		margin: 0;
-	}
-	a {
-		margin-left: 0.5rem;
-	}
+
 </style>

@@ -1,5 +1,5 @@
 import type sqlite3 from 'sqlite3';
-import type { MagazineType, IssueType, TitleType, AuthorType } from '../types/model';
+import type { MagazineType, IssueType, TitleType, AuthorType } from './types';
 
 export function getAllMagazines(db: sqlite3.Database) {
 	return new Promise<MagazineType[]>((ok, ng) => {
@@ -63,6 +63,18 @@ export function getAuthors(db: sqlite3.Database, titleId: number, authorType: "A
             }
         )
     });
+}
+
+export function getMagazine(db: sqlite3.Database, id: string) {
+	return new Promise<MagazineType>((ok, ng) => {
+		db.get<MagazineType>("SELECT * FROM magazines WHERE id = ?", [id], (err, row) => {
+			if (err || row == null) {
+				ng(err || "Data not found");
+			} else {
+				ok(row);
+			}
+		});
+	})
 }
 
 export function getContentType(contentType: number|null) {

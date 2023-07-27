@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import sqlite3 from 'sqlite3';
-import type { TitleType } from '../../types/model';
+import type { TitleType } from '../../lib/types';
 import { getAuthors, getAllMagazines, getContentType } from '../../lib/functions'
 
 type ParamType = {
@@ -77,7 +77,7 @@ db.close();
 
 ---
 
-<Layout title="Welcome to Astro.">
+<Layout title="Comic Magazine Data - Title Info">
 	<main>
 		<h1>{title.title}</h1>
 		<div>
@@ -85,13 +85,13 @@ db.close();
                 <dt>作者</dt>
                 <dd>
                     {authors.map((a,i) => i < authors.length - 1 ? 
-                        (<a href={`/author/${a.id}`}>{a.name}</a><span>&</span>) :
-                        (<a href={`/author/${a.id}`}>{a.name}</a>))}
+                        (<a href={`../author/${a.id}`}>{a.name}</a><span>&</span>) :
+                        (<a href={`../author/${a.id}`}>{a.name}</a>))}
                 </dd>
                 {scripters.length > 0 ? 
                     <><dt>原作</dt><dd>{scripters.map((a,i) => i < scripters.length - 1 ? 
-                        (<a href={`/author/${a.id}`}>{a.name}</a><span>&</span>) :
-                        (<a href={`/author/${a.id}`}>{a.name}</a>))}</dd></> : 
+                        (<a href={`../author/${a.id}`}>{a.name}</a><span>&</span>) :
+                        (<a href={`../author/${a.id}`}>{a.name}</a>))}</dd></> : 
                     <></>}
                 <dt>掲載誌</dt>
                 <dd>{magazineName}</dd>
@@ -113,7 +113,7 @@ db.close();
                     <tbody>
                         {contents.map(c => (
                             <tr>
-                                <td><a href={`/issue/${c.issue_id}`}>{c.magazine_name} {c.issue_name}</a></td>
+                                <td><a href={`../issue/${c.issue_id}`}>{c.magazine_name} {c.issue_name}</a></td>
                                 <td>{c.order_no}</td>
                                 <td>{c.page_no}</td>
                                 <td>{getContentType(c.content_type)}</td>
@@ -126,21 +126,27 @@ db.close();
             </div>
         </div>
         <div>
-            <a href="/title">作品一覧へ戻る</a>
+            <a href="./">作品一覧へ戻る</a>
         </div>
 	</main>
 </Layout>
 
 <style>
-	main {
-		margin: auto;
-		padding: 1.5rem;
-		max-width: 60ch;
-	}
-	h1 {
-		font-size: 2rem;
-		font-weight: 400;
-	}
+    table {
+        border-collapse:  collapse;
+        table-layout: fixed;
+        margin-bottom: 1rem;
+    }
+    tr {
+        border-bottom: 1px dotted lightgray;
+    }
+    th {
+        font-weight: normal;
+        text-align: left;
+    }
+    td {
+        padding-top: 0.5rem;
+    }
     span {
         margin-left: 0.5rem;
         margin-right: 0.5rem;

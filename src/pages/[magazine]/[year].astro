@@ -1,7 +1,8 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import sqlite3 from 'sqlite3';
-import type { MagazineType, TitleType, IssueType, ContentType } from '../../types/model';
+import type { MagazineType, TitleType, IssueType, ContentType } from '../../lib/types';
+import { getContentType } from '../../lib/functions'
 import { renderUniqueStylesheet } from 'astro/dist/runtime/server';
 
 type ParamType = {
@@ -89,18 +90,6 @@ function getContents(db: sqlite3.Database, magazineId: string, year: string | un
     });
 }
 
-function getContentTypeName(contentType: number | null) {
-    if (contentType == null) {
-        return "";
-    }
-    switch (contentType) {
-        case 0: return "読み切り";
-        case 1: return "連載";
-        case 2: return "出張掲載"
-        default: return "";
-    }
-}
-
 function contentTypeSortOrder(contentType: number | null) {
     if (contentType == null) {
         return 9;
@@ -111,6 +100,15 @@ function contentTypeSortOrder(contentType: number | null) {
         case 2: return 3;
         default: return 9;
     }
+}
+
+function cellStyle(n: number|null) {
+    if (n == null) {
+        return "empty";
+    } else if (n == 1) {
+        return "top";
+    }
+    return "";
 }
 
 const { year } = Astro.params;
@@ -158,7 +156,7 @@ db.close();
 
 ---
 
-<Layout title="Welcome to Astro.">
+<Layout title="Comic Magazine Data - Magazine Summary">
 	<main>
         <h1>{magazine.title} {year}年度</h1>
         <div>
@@ -174,34 +172,25 @@ db.close();
                     {summary.map(x => (
                         <tr>
                             <td class="title">{x.title}</td>
-                            <td class="content-type">{getContentTypeName(x.contentType)}</td>
-                            {x.data.map(d => (<td class={d == null ? "empty" : ""}>{d}</td>))}
+                            <td class="content-type">{getContentType(x.contentType)}</td>
+                            {x.data.map(d => (<td class={cellStyle(d)}>{d}</td>))}
                         </tr>
                     ))}
                 </tbody>
             </table>
         </div>
         <div>
-            <a href="/">戻る</a>
+            <a href="../">戻る</a>
         </div>
     </main>
 </Layout>
 
 <style>
-	main {
-		margin: auto;
-		padding: 1.5rem;
-	}
-	h1 {
-		font-size: 3rem;
-		font-weight: 800;
-		margin: 0;
-	}
     table {
         border-collapse:  collapse;
         table-layout: fixed;
-        width: 200rem;
         font-size: 80%;
+        margin-bottom: 1rem;
     }
     thead {
         background-color: silver;
@@ -222,5 +211,8 @@ db.close();
     }
     td.empty {
         background-color: lightgray;
+    }
+    td.top {
+         background-color: yellow;
     }
 </style>

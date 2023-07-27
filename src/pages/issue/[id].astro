@@ -1,8 +1,8 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import sqlite3 from 'sqlite3';
-import type { MagazineType, IssueType, AuthorType } from '../../types/model';
-import { getAuthors, getContentType } from '../../lib/functions'
+import type { IssueType, AuthorType } from '../../lib/types';
+import { getAuthors, getMagazine, getContentType } from '../../lib/functions'
 
 type ParamType = {
     params: {
@@ -42,18 +42,6 @@ export function getStaticPaths() {
 	})
 }
 
-function getMagazine(db: sqlite3.Database, id: string) {
-	return new Promise<MagazineType>((ok, ng) => {
-		db.get<MagazineType>("SELECT * FROM magazines WHERE id = ?", [id], (err, row) => {
-			if (err || row == null) {
-				ng(err || "Data not found");
-			} else {
-				ok(row);
-			}
-		});
-	})
-}
-
 function getContents(db: sqlite3.Database, id: string) {
     return new Promise<QueryResultype[]>((ok, ng) => {
         db.all<QueryResultype>(
@@ -87,7 +75,7 @@ db.close();
 
 ---
 
-<Layout title="Welcome to Astro.">
+<Layout title="Comic Magazine Data - Issue">
 	<main>
         <h1>{magazine?.title} {issue.title}</h1>
         <p>{issue.description}</p>
@@ -95,27 +83,27 @@ db.close();
             <table>
                 <thead>
                     <tr>
-                        <td>No</td>
-                        <td>作品名</td>
-                        <td>漫画</td>
-                        <td>原作</td>
-                        <td>頁</td>
-                        <td>種別</td>
-                        <td>カラー有無</td>
-                        <td>備考</td>
+                        <th>No</th>
+                        <th>作品名</th>
+                        <th>漫画</th>
+                        <th>原作</th>
+                        <th>頁</th>
+                        <th>種別</th>
+                        <th>カラー有無</th>
+                        <th>備考</th>
                     </tr>
                 </thead>
                 <tbody>
                     {contents.map(c => (
                         <tr>
                             <td>{c.order_no}</td>
-                            <td><a href={`/title/${c.title_id}`}>{c.title}</a></td>
+                            <td><a href={`../title/${c.title_id}`}>{c.title}</a></td>
                             <td>{c.authors?.map((a,i) => i < (c.authors?.length ?? 0) - 1 ? 
-                                    (<a href={`/author/${a.id}`}>{a.name}</a><span>&</span>) :
-                                    (<a href={`/author/${a.id}`}>{a.name}</a>))}</td>
+                                    (<a href={`../author/${a.id}`}>{a.name}</a><span>&</span>) :
+                                    (<a href={`../author/${a.id}`}>{a.name}</a>))}</td>
                             <td>{c.scripters?.map((a,i) => i < (c.scripters?.length ?? 0) - 1 ? 
-                                    (<a href={`/author/${a.id}`}>{a.name}</a><span>&</span>) :
-                                    (<a href={`/author/${a.id}`}>{a.name}</a>))}</td>
+                                    (<a href={`../author/${a.id}`}>{a.name}</a><span>&</span>) :
+                                    (<a href={`../author/${a.id}`}>{a.name}</a>))}</td>
                             <td>{c.page_no}</td>
                             <td>{getContentType(c.content_type)}</td>
                             <td>{c.color == 1 ? "有" : ""}</td>
@@ -132,14 +120,19 @@ db.close();
 </Layout>
 
 <style>
-	main {
-		margin: auto;
-		padding: 1.5rem;
-		max-width: 1000px;
-	}
-	h1 {
-		font-size: 2rem;
-		font-weight: 400;
-		margin: 0;
-	}
+    table {
+        border-collapse:  collapse;
+        table-layout: fixed;
+        margin-bottom: 1rem;
+    }
+    tr {
+        border-bottom: 1px dotted lightgray;
+    }
+    th {
+        font-weight: normal;
+        text-align: left;
+    }
+    td {
+        padding-top: 0.5rem;
+    }
 </style>
