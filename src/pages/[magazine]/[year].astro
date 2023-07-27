@@ -1,4 +1,5 @@
 ---
+import Config from '../../../astro.config.mjs'
 import Layout from '../../layouts/Layout.astro';
 import sqlite3 from 'sqlite3';
 import type { MagazineType, TitleType, IssueType, ContentType } from '../../lib/types';
@@ -114,6 +115,8 @@ function cellStyle(n: number|null) {
 const { year } = Astro.params;
 const { magazine } = Astro.props;
 
+const base = Config.base || "";
+
 const dbPath = import.meta.env.COMICDB_PATH;
 const db = new sqlite3.Database(dbPath);
 
@@ -180,7 +183,7 @@ db.close();
             </table>
         </div>
         <div>
-            <a href="../">戻る</a>
+            <a href=`${base}/`>戻る</a>
         </div>
     </main>
 </Layout>
@@ -201,9 +204,11 @@ db.close();
         padding: 0.1rem 0.2rem;
     }
     td.title, th.title {
-        width: 25rem;
+        max-width: 30rem;
         text-align: left;
         white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
     }
     td.content-type, th.content-type {
         width: 5rem;

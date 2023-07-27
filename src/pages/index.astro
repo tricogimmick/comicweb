@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Config from '../../astro.config.mjs';
 import sqlite3 from 'sqlite3';
 import { getAllMagazines, getAllIssues } from '../lib/functions';
 
@@ -9,6 +10,7 @@ const db = new sqlite3.Database(dbPath);
 const magazines = await getAllMagazines(db);
 const issues = await getAllIssues(db);
 const years = ["2022", "2023"];
+const base = Config.base || "";
 
 db.close();
 
@@ -23,11 +25,11 @@ db.close();
 					<h2>{magazine.title}</h2>
 					{years.map(y => (
 						<div>
-							<h3><a href={`./${magazine.id}/${y}`}>{y}年度</a></h3>
+							<h3><a href={`${base}/${magazine.id}/${y}`}>{y}年度</a></h3>
 							<div>
 							{issues
 								.filter(x => x.magazine_id == magazine.id && x.id.substring(4,8) == String(y))
-								.map(x => (<a href={`./issue/${x.id}`}>{x.id.substring(8)}</a>))}
+								.map(x => (<a href={`${base}/issue/${x.id}`}>{x.id.substring(8)}</a>))}
 							</div>
 						</div>
 					))}
@@ -37,7 +39,7 @@ db.close();
 			))}
 		</div>
 		<div>
-			<a href="./title/">作品一覧</a> / <a href="./author/">作者一覧</a>
+			<a href=`${base}/title/`>作品一覧</a> / <a href=`${base}/author/`>作者一覧</a>
 		</div>
 	</main>
 </Layout>

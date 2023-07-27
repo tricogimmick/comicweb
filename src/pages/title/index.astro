@@ -1,8 +1,10 @@
 ---
+import Config from '../../../astro.config.mjs';
 import Layout from '../../layouts/Layout.astro';
 import sqlite3 from 'sqlite3';
 import { getAllTitles } from '../../lib/functions';
 
+const base = Config.base || "";
 
 const dbPath = import.meta.env.COMICDB_PATH;
 const db = new sqlite3.Database(dbPath);
@@ -18,11 +20,11 @@ db.close();
 		<h1>Comic Titles</h1>
 		<div>
             {titles.map(t => (
-                <div><a href={`./${t.id}`}>{t.title}</a></div>
+                <div><a href={`${base}/title/${t.id}`}>{t.title}</a></div>
             ))}
 		</div>
 		<div>
-			<a href="..">TOPへ</a>
+			<a href=`${base}/`>TOPへ</a>
 		</div>
 	</main>
 </Layout>

@@ -1,4 +1,5 @@
 ---
+import Config from '../../../astro.config.mjs';
 import Layout from '../../layouts/Layout.astro';
 import sqlite3 from 'sqlite3';
 import type { TitleType } from '../../lib/types';
@@ -62,6 +63,8 @@ function getContents(db: sqlite3.Database, titleId: number) {
 
 const { title } = Astro.props;
 
+const base = Config.base || "";
+
 const dbPath = import.meta.env.COMICDB_PATH;
 const db = new sqlite3.Database(dbPath);
 
@@ -85,13 +88,13 @@ db.close();
                 <dt>作者</dt>
                 <dd>
                     {authors.map((a,i) => i < authors.length - 1 ? 
-                        (<a href={`../author/${a.id}`}>{a.name}</a><span>&</span>) :
-                        (<a href={`../author/${a.id}`}>{a.name}</a>))}
+                        (<a href={`${base}/author/${a.id}`}>{a.name}</a><span>&</span>) :
+                        (<a href={`${base}/author/${a.id}`}>{a.name}</a>))}
                 </dd>
                 {scripters.length > 0 ? 
                     <><dt>原作</dt><dd>{scripters.map((a,i) => i < scripters.length - 1 ? 
-                        (<a href={`../author/${a.id}`}>{a.name}</a><span>&</span>) :
-                        (<a href={`../author/${a.id}`}>{a.name}</a>))}</dd></> : 
+                        (<a href={`${base}/author/${a.id}`}>{a.name}</a><span>&</span>) :
+                        (<a href={`${base}/author/${a.id}`}>{a.name}</a>))}</dd></> : 
                     <></>}
                 <dt>掲載誌</dt>
                 <dd>{magazineName}</dd>
@@ -113,7 +116,7 @@ db.close();
                     <tbody>
                         {contents.map(c => (
                             <tr>
-                                <td><a href={`../issue/${c.issue_id}`}>{c.magazine_name} {c.issue_name}</a></td>
+                                <td><a href={`${base}/issue/${c.issue_id}`}>{c.magazine_name} {c.issue_name}</a></td>
                                 <td>{c.order_no}</td>
                                 <td>{c.page_no}</td>
                                 <td>{getContentType(c.content_type)}</td>
@@ -126,7 +129,7 @@ db.close();
             </div>
         </div>
         <div>
-            <a href="./">作品一覧へ戻る</a>
+            <a href=`${base}/title/`>作品一覧へ戻る</a>
         </div>
 	</main>
 </Layout>

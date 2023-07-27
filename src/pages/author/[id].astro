@@ -1,4 +1,5 @@
 ---
+import Config from '../../../astro.config.mjs'
 import Layout from '../../layouts/Layout.astro';
 import sqlite3 from 'sqlite3';
 import type { AuthorType } from '../../lib/types';
@@ -55,6 +56,8 @@ function getTitles(db: sqlite3.Database, id: string) {
 
 const { author } = Astro.props;
 
+const base = Config.base || "";
+
 const dbPath = import.meta.env.COMICDB_PATH;
 const db = new sqlite3.Database(dbPath);
 
@@ -81,7 +84,7 @@ db.close();
                     <tbody>
                         {titles.map(t => (
                             <tr>
-                                <td><a href={`../title/${t.id}`}>{t.title}</a></td>
+                                <td><a href={`${base}/title/${t.id}`}>{t.title}</a></td>
                                 <td>{getContentType(t.content_type)}</td>
                                 <td>{t.magazine_name}</td>
                                 <td>{t.description}</td>
@@ -92,7 +95,7 @@ db.close();
             </div>
         </div>
         <div>
-            <a href="./">作者一覧へ戻る</a>
+            <a href=`${base}/author/`>作者一覧へ戻る</a>
         </div>
 	</main>
 </Layout>
