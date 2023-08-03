@@ -1,5 +1,4 @@
 ---
-import Config from '../../../astro.config.mjs';
 import Layout from '../../layouts/Layout.astro';
 import sqlite3 from 'sqlite3';
 import type { TitleType } from '../../lib/types';
@@ -63,7 +62,7 @@ function getContents(db: sqlite3.Database, titleId: number) {
 
 const { title } = Astro.props;
 
-const base = Config.base || "";
+const base = "/comic_magazine_data";
 
 const dbPath = import.meta.env.COMICDB_PATH;
 const db = new sqlite3.Database(dbPath);

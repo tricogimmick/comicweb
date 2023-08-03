@@ -1,10 +1,8 @@
 ---
-import Config from '../../../astro.config.mjs'
 import Layout from '../../layouts/Layout.astro';
 import sqlite3 from 'sqlite3';
 import type { MagazineType, TitleType, IssueType, ContentType } from '../../lib/types';
 import { getContentType } from '../../lib/functions'
-import { renderUniqueStylesheet } from 'astro/dist/runtime/server';
 
 type ParamType = {
     params: {
@@ -115,7 +113,7 @@ function cellStyle(n: number|null) {
 const { year } = Astro.params;
 const { magazine } = Astro.props;
 
-const base = Config.base || "";
+const base = "/comic_magazine_data";
 
 const dbPath = import.meta.env.COMICDB_PATH;
 const db = new sqlite3.Database(dbPath);

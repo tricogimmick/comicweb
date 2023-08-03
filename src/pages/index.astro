@@ -1,6 +1,5 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Config from '../../astro.config.mjs';
 import sqlite3 from 'sqlite3';
 import { getAllMagazines, getAllIssues } from '../lib/functions';
 
@@ -10,7 +9,7 @@ const db = new sqlite3.Database(dbPath);
 const magazines = await getAllMagazines(db);
 const issues = await getAllIssues(db);
 const years = ["2022", "2023"];
-const base = Config.base || "";
+const base = "/comic_magazine_data";
 
 db.close();
 
@@ -20,7 +19,7 @@ db.close();
 	<main>
 		<h1>Comic Magazine Data</h1>
 		<div>
-			{magazines.filter(m => m.id != 'BSMG').map(magazine => (
+			{magazines.filter(m => m.id != 'BSMG' && m.id != 'ISDW').map(magazine => (
 				<div>
 					<h2>{magazine.title}</h2>
 					{years.map(y => (
