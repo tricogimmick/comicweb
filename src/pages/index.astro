@@ -11,6 +11,8 @@ const issues = await getAllIssues(db);
 const years = ["2022", "2023"];
 const base = "/comic_magazine_data";
 
+const magazineFilter = ['WSMG','MAFT','WSJP','WSSD','WMRG','WYMG'];
+
 db.close();
 
 ---
@@ -19,7 +21,7 @@ db.close();
 	<main>
 		<h1>Comic Magazine Data</h1>
 		<div>
-			{magazines.filter(m => m.id != 'BSMG' && m.id != 'ISDW').map(magazine => (
+			{magazines.filter(m => magazineFilter.includes(m.id)).map(magazine => (
 				<div>
 					<h2>{magazine.title}</h2>
 					{years.map(y => (
