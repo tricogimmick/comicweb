@@ -33,6 +33,7 @@ export function getStaticPaths() {
                 for (const m of rows) {
                     result.push({ params: { magazine: m.id, year: 2022 }, props: { magazine: m} });
                     result.push({ params: { magazine: m.id, year: 2023 }, props: { magazine: m} });
+                    result.push({ params: { magazine: m.id, year: 2024 }, props: { magazine: m} });
                 }
                 ok(result);
 			}
